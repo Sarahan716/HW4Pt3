@@ -7,67 +7,78 @@
 <title>Vital Visions - BFSK Communication</title>
 
 <style>
-body {
-  margin: 0;
-  padding: 15px;
-  background: #111;
-  color: white;
-  font-family: Arial, sans-serif;
-  text-align: center;
-}
+  body {
+    margin: 0;
+    padding: 15px;
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
 
-button, select, input {
-  padding: 10px;
-  margin: 7px;
-  font-size: 16px;
-}
+  button, select, input {
+    padding: 10px;
+    margin: 7px;
+    font-size: 16px;
+  }
 
-button {
-  cursor: pointer;
-}
+  button {
+    cursor: pointer;
+  }
 
-.mode {
-  display: none;
-}
+  .mode {
+    display: none;
+  }
 
-#screen {
-  position: relative;
-  width: 100%;
-  height: 65vh;
-  overflow: hidden;
-  background: #555;
-}
+  #screen {
+    position: relative;
+    width: 100%;
+    height: 65vh;
+    overflow: hidden;
+    background: #555;
+  }
 
-#background {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  #background {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-#overlay {
-  position: absolute;
-  inset: 0;
-  background: white;
-  opacity: 0.5;
-  pointer-events: none;
-}
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0.5;
+    pointer-events: none;
+  }
 
-video {
-  width: 100%;
-  max-width: 480px;
-  background: black;
-}
+  video {
+    width: 100%;
+    max-width: 480px;
+    background: black;
+    border: 2px solid white;
+  }
 
-canvas {
-  width: 100%;
-  max-width: 480px;
-  background: #222;
-}
+  canvas {
+    width: 100%;
+    max-width: 480px;
+    background: #222;
+  }
 
-#brightness {
-  font-size: 28px;
-  color: lightgreen;
-}
+  #brightness {
+    font-size: 28px;
+    color: lightgreen;
+  }
+
+  #detectedBit {
+    font-size: 40px;
+    color: cyan;
+    font-weight: bold;
+  }
+
+  #frequencyInfo {
+    color: #bbb;
+  }
 </style>
 </head>
 
@@ -78,7 +89,10 @@ canvas {
 <button onclick="showMode('tx')">Transmitter</button>
 <button onclick="showMode('rx')">Receiver</button>
 
+<!-- ===================== -->
 <!-- TRANSMITTER -->
+<!-- ===================== -->
+
 <div id="tx" class="mode">
 
   <h3>MacBook Transmitter</h3>
@@ -99,6 +113,10 @@ canvas {
     <input id="message" value="10110010">
   </p>
 
+  <p>
+    Bit 0 = 2 Hz | Bit 1 = 4 Hz
+  </p>
+
   <button onclick="startTransmission()">
     Start Transmission
   </button>
@@ -112,7 +130,10 @@ canvas {
 
 </div>
 
+<!-- ===================== -->
 <!-- RECEIVER -->
+<!-- ===================== -->
+
 <div id="rx" class="mode">
 
   <h3>iPhone Receiver</h3>
@@ -125,6 +146,13 @@ canvas {
 
   <h3>Mean Brightness</h3>
   <p id="brightness">--</p>
+
+  <h3>Detected BFSK Bit</h3>
+  <p id="detectedBit">Waiting...</p>
+
+  <p id="frequencyInfo">
+    2 Hz: -- | 4 Hz: --
+  </p>
 
   <h3>Brightness Signal</h3>
   <canvas id="graph" width="400" height="180"></canvas>
@@ -148,16 +176,19 @@ function showMode(mode) {
 // Show transmitter by default
 showMode("tx");
 
+
 // =====================
 // TRANSMITTER
 // =====================
 
-const bitDuration = 1000;
-const f0 = 2;
-const f1 = 4;
+const bitDuration = 1000; // milliseconds
+
+const f0 = 2; // Hz for bit 0
+const f1 = 4; // Hz for bit 1
 
 let transmitting = false;
 
+// Load background image
 document.getElementById("imageFile").onchange = e => {
   const file = e.target.files[0];
 
@@ -170,7 +201,8 @@ document.getElementById("imageFile").onchange = e => {
 function startTransmission() {
   if (transmitting) return;
 
-  const bits = document.getElementById("message").value.trim();
+  const bits = document.getElementById("message")
+    .value.trim();
 
   if (!/^[01]+$/.test(bits)) {
     alert("Enter only binary digits: 0 and 1");
@@ -183,39 +215,57 @@ function startTransmission() {
     document.getElementById("delta").value
   );
 
-  const overlay = document.getElementById("overlay");
-  const status = document.getElementById("txStatus");
+  const overlay =
+    document.getElementById("overlay");
+
+  const status =
+    document.getElementById("txStatus");
 
   const start = performance.now();
 
   function animate(now) {
     const elapsed = now - start;
-    const bitIndex = Math.floor(elapsed / bitDuration);
+
+    const bitIndex = Math.floor(
+      elapsed / bitDuration
+    );
 
     if (bitIndex >= bits.length) {
       transmitting = false;
+
       overlay.style.opacity = 0.5;
-      status.textContent = "Transmission complete";
+
+      status.textContent =
+        "Transmission complete";
+
       return;
     }
 
     const bit = bits[bitIndex];
-    const frequency = bit === "0" ? f0 : f1;
 
-    const bitTime = (elapsed % bitDuration) / 1000;
+    const frequency =
+      bit === "0" ? f0 : f1;
+
+    const bitTime =
+      (elapsed % bitDuration) / 1000;
 
     const wave = Math.sin(
       2 * Math.PI * frequency * bitTime
     );
 
-    const alpha = 0.5 +
-      (delta / 2) * (wave >= 0 ? 1 : -1);
+    // BFSK alpha modulation
+    const alpha =
+      0.5 + (delta / 2) *
+      (wave >= 0 ? 1 : -1);
 
     overlay.style.opacity = alpha;
 
     status.textContent =
-      "Sending bit " + (bitIndex + 1) +
-      "/" + bits.length + ": " + bit;
+      "Sending bit " +
+      (bitIndex + 1) +
+      "/" + bits.length +
+      ": " + bit +
+      " (" + frequency + " Hz)";
 
     requestAnimationFrame(animate);
   }
@@ -223,76 +273,112 @@ function startTransmission() {
   requestAnimationFrame(animate);
 }
 
+
 // =====================
 // RECEIVER
 // =====================
 
-const video = document.getElementById("video");
-const graph = document.getElementById("graph");
-const ctx = graph.getContext("2d");
+const video =
+  document.getElementById("video");
 
-const sampleCanvas = document.createElement("canvas");
+const graph =
+  document.getElementById("graph");
+
+const ctx =
+  graph.getContext("2d");
+
+// Small canvas for processing camera frames
+const sampleCanvas =
+  document.createElement("canvas");
+
 sampleCanvas.width = 80;
 sampleCanvas.height = 60;
 
 const sampleCtx = sampleCanvas.getContext(
-  "2d", {willReadFrequently: true}
+  "2d",
+  {willReadFrequently: true}
 );
 
+// Store brightness and timestamps
 let samples = [];
+let sampleTimes = [];
+
 let lastSample = 0;
+let lastDetection = 0;
 let cameraRunning = false;
+
+
+// =====================
+// START CAMERA
+// =====================
 
 async function startCamera() {
   if (cameraRunning) return;
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        facingMode: "environment",
-        width: {ideal: 640},
-        height: {ideal: 480},
-        frameRate: {ideal: 30}
-      }
-    });
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: "environment",
+          width: {ideal: 640},
+          height: {ideal: 480},
+          frameRate: {ideal: 30}
+        }
+      });
 
     video.srcObject = stream;
     await video.play();
 
     cameraRunning = true;
 
-    document.getElementById("rxStatus").textContent =
-      "Camera running";
+    document.getElementById("rxStatus")
+      .textContent = "Camera running";
 
     requestAnimationFrame(processFrame);
 
   } catch (error) {
-    document.getElementById("rxStatus").textContent =
+    document.getElementById("rxStatus")
+      .textContent =
       "Camera error: " + error.message;
   }
 }
+
+
+// =====================
+// PROCESS CAMERA FRAMES
+// =====================
 
 function processFrame(timestamp) {
   if (!cameraRunning) return;
 
   requestAnimationFrame(processFrame);
 
+  // Sample approximately 30 FPS
   if (timestamp - lastSample < 33) return;
+
   lastSample = timestamp;
 
   if (video.readyState < 2) return;
 
-  sampleCtx.drawImage(video, 0, 0, 80, 60);
+  // Capture camera frame
+  sampleCtx.drawImage(
+    video, 0, 0, 80, 60
+  );
 
-  const frame = sampleCtx.getImageData(0, 0, 80, 60);
+  const frame = sampleCtx.getImageData(
+    0, 0, 80, 60
+  );
+
   const data = frame.data;
 
   let sum = 0;
   let count = 0;
 
+  // Measure brightness in central region
   for (let y = 15; y < 45; y++) {
     for (let x = 20; x < 60; x++) {
+
       const i = (y * 80 + x) * 4;
 
       const gray =
@@ -307,17 +393,32 @@ function processFrame(timestamp) {
 
   const mean = sum / count;
 
-  document.getElementById("brightness").textContent =
-    mean.toFixed(2);
+  document.getElementById("brightness")
+    .textContent = mean.toFixed(2);
 
+  // Save brightness and timestamp
   samples.push(mean);
+  sampleTimes.push(timestamp / 1000);
 
+  // Keep latest 120 samples
   if (samples.length > 120) {
     samples.shift();
+    sampleTimes.shift();
   }
 
   drawGraph();
+
+  // Detect BFSK frequency every 200 ms
+  if (timestamp - lastDetection >= 200) {
+    detectFrequency();
+    lastDetection = timestamp;
+  }
 }
+
+
+// =====================
+// DRAW BRIGHTNESS GRAPH
+// =====================
 
 function drawGraph() {
   const w = graph.width;
@@ -337,15 +438,101 @@ function drawGraph() {
   ctx.beginPath();
 
   samples.forEach((value, i) => {
-    const x = i / (samples.length - 1) * w;
-    const y = h - 10 -
+    const x =
+      i / (samples.length - 1) * w;
+
+    const y =
+      h - 10 -
       (value - min) / span * (h - 20);
 
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
   });
 
   ctx.stroke();
+}
+
+
+// =====================
+// BFSK FREQUENCY DETECTION
+// =====================
+
+function detectFrequency() {
+  if (samples.length < 20) return;
+
+  // Analyze most recent 1 second
+  const latestTime =
+    sampleTimes[sampleTimes.length - 1];
+
+  const recent = [];
+
+  for (let i = 0; i < samples.length; i++) {
+    if (sampleTimes[i] >= latestTime - 1.0) {
+      recent.push({
+        t: sampleTimes[i],
+        value: samples[i]
+      });
+    }
+  }
+
+  if (recent.length < 15) return;
+
+  // Remove DC component
+  const mean = recent.reduce(
+    (sum, p) => sum + p.value, 0
+  ) / recent.length;
+
+  // Estimate signal strength at frequency
+  function frequencyAmplitude(freq) {
+    let real = 0;
+    let imag = 0;
+
+    const t0 = recent[0].t;
+
+    for (const p of recent) {
+      const value = p.value - mean;
+
+      const angle =
+        2 * Math.PI * freq * (p.t - t0);
+
+      real += value * Math.cos(angle);
+      imag += value * Math.sin(angle);
+    }
+
+    return 2 * Math.sqrt(
+      real * real + imag * imag
+    ) / recent.length;
+  }
+
+  // Compare 2 Hz and 4 Hz components
+  const amp0 = frequencyAmplitude(f0);
+  const amp1 = frequencyAmplitude(f1);
+
+  document.getElementById("frequencyInfo")
+    .textContent =
+    "2 Hz: " + amp0.toFixed(2) +
+    " | 4 Hz: " + amp1.toFixed(2);
+
+  // Check if signal is distinguishable
+  const strongest = Math.max(amp0, amp1);
+  const weakest = Math.min(amp0, amp1);
+
+  let detected;
+
+  if (
+    strongest < 0.7 ||
+    strongest < 1.5 * weakest
+  ) {
+    detected = "Uncertain";
+  } else {
+    detected = amp1 > amp0 ? "1" : "0";
+  }
+
+  document.getElementById("detectedBit")
+    .textContent = detected;
 }
 
 </script>
