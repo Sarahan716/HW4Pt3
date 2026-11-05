@@ -1,0 +1,353 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vital Visions - BFSK Communication</title>
+
+<style>
+body {
+  margin: 0;
+  padding: 15px;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+button, select, input {
+  padding: 10px;
+  margin: 7px;
+  font-size: 16px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.mode {
+  display: none;
+}
+
+#screen {
+  position: relative;
+  width: 100%;
+  height: 65vh;
+  overflow: hidden;
+  background: #555;
+}
+
+#background {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#overlay {
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+video {
+  width: 100%;
+  max-width: 480px;
+  background: black;
+}
+
+canvas {
+  width: 100%;
+  max-width: 480px;
+  background: #222;
+}
+
+#brightness {
+  font-size: 28px;
+  color: lightgreen;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Vital Visions - BFSK Communication</h2>
+
+<button onclick="showMode('tx')">Transmitter</button>
+<button onclick="showMode('rx')">Receiver</button>
+
+<!-- TRANSMITTER -->
+<div id="tx" class="mode">
+
+  <h3>MacBook Transmitter</h3>
+
+  <p>Background image:</p>
+  <input type="file" accept="image/*" id="imageFile">
+
+  <p>
+    Delta Alpha:
+    <select id="delta">
+      <option value="0.5">0.5</option>
+      <option value="0.1">0.1</option>
+    </select>
+  </p>
+
+  <p>
+    Binary message:
+    <input id="message" value="10110010">
+  </p>
+
+  <button onclick="startTransmission()">
+    Start Transmission
+  </button>
+
+  <p id="txStatus">Ready</p>
+
+  <div id="screen">
+    <img id="background" alt="Background">
+    <div id="overlay"></div>
+  </div>
+
+</div>
+
+<!-- RECEIVER -->
+<div id="rx" class="mode">
+
+  <h3>iPhone Receiver</h3>
+
+  <button onclick="startCamera()">Start Camera</button>
+
+  <p id="rxStatus">Camera not started</p>
+
+  <video id="video" autoplay playsinline muted></video>
+
+  <h3>Mean Brightness</h3>
+  <p id="brightness">--</p>
+
+  <h3>Brightness Signal</h3>
+  <canvas id="graph" width="400" height="180"></canvas>
+
+</div>
+
+<script>
+
+// =====================
+// MODE SELECTION
+// =====================
+
+function showMode(mode) {
+  document.getElementById("tx").style.display =
+    mode === "tx" ? "block" : "none";
+
+  document.getElementById("rx").style.display =
+    mode === "rx" ? "block" : "none";
+}
+
+// Show transmitter by default
+showMode("tx");
+
+// =====================
+// TRANSMITTER
+// =====================
+
+const bitDuration = 1000;
+const f0 = 2;
+const f1 = 4;
+
+let transmitting = false;
+
+document.getElementById("imageFile").onchange = e => {
+  const file = e.target.files[0];
+
+  if (file) {
+    document.getElementById("background").src =
+      URL.createObjectURL(file);
+  }
+};
+
+function startTransmission() {
+  if (transmitting) return;
+
+  const bits = document.getElementById("message").value.trim();
+
+  if (!/^[01]+$/.test(bits)) {
+    alert("Enter only binary digits: 0 and 1");
+    return;
+  }
+
+  transmitting = true;
+
+  const delta = parseFloat(
+    document.getElementById("delta").value
+  );
+
+  const overlay = document.getElementById("overlay");
+  const status = document.getElementById("txStatus");
+
+  const start = performance.now();
+
+  function animate(now) {
+    const elapsed = now - start;
+    const bitIndex = Math.floor(elapsed / bitDuration);
+
+    if (bitIndex >= bits.length) {
+      transmitting = false;
+      overlay.style.opacity = 0.5;
+      status.textContent = "Transmission complete";
+      return;
+    }
+
+    const bit = bits[bitIndex];
+    const frequency = bit === "0" ? f0 : f1;
+
+    const bitTime = (elapsed % bitDuration) / 1000;
+
+    const wave = Math.sin(
+      2 * Math.PI * frequency * bitTime
+    );
+
+    const alpha = 0.5 +
+      (delta / 2) * (wave >= 0 ? 1 : -1);
+
+    overlay.style.opacity = alpha;
+
+    status.textContent =
+      "Sending bit " + (bitIndex + 1) +
+      "/" + bits.length + ": " + bit;
+
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// =====================
+// RECEIVER
+// =====================
+
+const video = document.getElementById("video");
+const graph = document.getElementById("graph");
+const ctx = graph.getContext("2d");
+
+const sampleCanvas = document.createElement("canvas");
+sampleCanvas.width = 80;
+sampleCanvas.height = 60;
+
+const sampleCtx = sampleCanvas.getContext(
+  "2d", {willReadFrequently: true}
+);
+
+let samples = [];
+let lastSample = 0;
+let cameraRunning = false;
+
+async function startCamera() {
+  if (cameraRunning) return;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        facingMode: "environment",
+        width: {ideal: 640},
+        height: {ideal: 480},
+        frameRate: {ideal: 30}
+      }
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    cameraRunning = true;
+
+    document.getElementById("rxStatus").textContent =
+      "Camera running";
+
+    requestAnimationFrame(processFrame);
+
+  } catch (error) {
+    document.getElementById("rxStatus").textContent =
+      "Camera error: " + error.message;
+  }
+}
+
+function processFrame(timestamp) {
+  if (!cameraRunning) return;
+
+  requestAnimationFrame(processFrame);
+
+  if (timestamp - lastSample < 33) return;
+  lastSample = timestamp;
+
+  if (video.readyState < 2) return;
+
+  sampleCtx.drawImage(video, 0, 0, 80, 60);
+
+  const frame = sampleCtx.getImageData(0, 0, 80, 60);
+  const data = frame.data;
+
+  let sum = 0;
+  let count = 0;
+
+  for (let y = 15; y < 45; y++) {
+    for (let x = 20; x < 60; x++) {
+      const i = (y * 80 + x) * 4;
+
+      const gray =
+        0.299 * data[i] +
+        0.587 * data[i + 1] +
+        0.114 * data[i + 2];
+
+      sum += gray;
+      count++;
+    }
+  }
+
+  const mean = sum / count;
+
+  document.getElementById("brightness").textContent =
+    mean.toFixed(2);
+
+  samples.push(mean);
+
+  if (samples.length > 120) {
+    samples.shift();
+  }
+
+  drawGraph();
+}
+
+function drawGraph() {
+  const w = graph.width;
+  const h = graph.height;
+
+  ctx.fillStyle = "#222";
+  ctx.fillRect(0, 0, w, h);
+
+  if (samples.length < 2) return;
+
+  const min = Math.min(...samples);
+  const max = Math.max(...samples);
+  const span = Math.max(max - min, 1);
+
+  ctx.strokeStyle = "#00ff88";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+
+  samples.forEach((value, i) => {
+    const x = i / (samples.length - 1) * w;
+    const y = h - 10 -
+      (value - min) / span * (h - 20);
+
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+
+  ctx.stroke();
+}
+
+</script>
+</body>
+</html>
