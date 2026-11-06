@@ -3,8 +3,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vital Visions - BFSK Communication</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vital Visions | BFSK Screen-Camera</title>
+
 <style>
 * { box-sizing: border-box; }
 
@@ -13,7 +14,7 @@ body {
   padding: 16px;
   background: #111827;
   color: #f9fafb;
-  font-family: Arial, sans-serif;
+  font: 16px Arial, sans-serif;
   text-align: center;
 }
 
@@ -22,9 +23,9 @@ h2 { font-size: 20px; }
 
 button, input, select {
   font-size: 16px;
-  padding: 10px;
-  margin: 6px;
-  border-radius: 7px;
+  padding: 9px;
+  margin: 5px;
+  border-radius: 6px;
   border: 1px solid #64748b;
 }
 
@@ -34,16 +35,14 @@ button {
   cursor: pointer;
 }
 
-button:disabled {
-  opacity: 0.5;
-}
+button:disabled { opacity: .45; }
 
 .mode { display: none; }
 
 .panel {
   max-width: 850px;
   margin: 16px auto;
-  padding: 16px;
+  padding: 15px;
   background: #1f2937;
   border-radius: 12px;
 }
@@ -56,8 +55,6 @@ button:disabled {
   gap: 8px;
 }
 
-label { display: inline-block; }
-
 .info {
   color: #cbd5e1;
   font-size: 14px;
@@ -68,7 +65,7 @@ label { display: inline-block; }
   width: 100%;
   height: 65vh;
   overflow: hidden;
-  background: linear-gradient(120deg, #234e70, #fbf8cc);
+  background: linear-gradient(125deg, #234e70, #fbf8cc);
 }
 
 #background {
@@ -83,7 +80,7 @@ label { display: inline-block; }
   position: absolute;
   inset: 0;
   background: white;
-  opacity: 0.5;
+  opacity: .5;
   pointer-events: none;
 }
 
@@ -137,6 +134,8 @@ canvas {
   margin-top: 5px;
 }
 
+.table-wrap { overflow-x: auto; }
+
 table {
   border-collapse: collapse;
   width: 100%;
@@ -150,38 +149,41 @@ th, td {
 
 th { background: #374151; }
 
-.table-wrap { overflow-x: auto; }
-
 pre {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   text-align: left;
-  font-size: 12px;
+  font-size: 13px;
 }
 
-.good { color: #4ade80; }
-.warning { color: #fbbf24; }
+#decodeStatus { font-weight: bold; }
 </style>
 </head>
 
 <body>
 
-<h1>Vital Visions</h1>
-<p>BFSK Screen-Camera Communication</p>
+<h1>Vital Visions — BFSK Communication</h1>
 
 <div class="row">
-  <button onclick="showMode('tx')">MacBook Transmitter</button>
-  <button onclick="showMode('rx')">iPhone Receiver</button>
+  <button onclick="showMode('tx')">
+    MacBook Transmitter
+  </button>
+  <button onclick="showMode('rx')">
+    iPhone Receiver
+  </button>
 </div>
 
 <!-- TRANSMITTER -->
 
-<div id="tx" class="mode">
-
+<section id="tx" class="mode">
   <div class="panel">
+
     <h2>MacBook Transmitter</h2>
 
-    <p>Background image:</p>
-    <input type="file" id="imageFile" accept="image/*">
+    <p>
+      Background image:
+      <input type="file" id="imageFile" accept="image/*">
+    </p>
 
     <div class="row">
       <label>
@@ -202,15 +204,15 @@ pre {
       </label>
     </div>
 
-    <p>Binary message:</p>
-    <input id="txMessage" value="10110010">
-
-    <p class="info">
-      Bit 0 = 2 Hz | Bit 1 = 4 Hz
+    <p>
+      Binary message:
+      <input id="txMessage"
+             value="10110010"
+             inputmode="numeric">
     </p>
 
     <p class="info">
-      Synchronization preamble: 01011010
+      0 = 2 Hz, 1 = 4 Hz | Preamble: 01011010
     </p>
 
     <button id="txButton" onclick="startTransmission()">
@@ -222,23 +224,26 @@ pre {
     </button>
 
     <p id="txStatus">Ready</p>
+
   </div>
 
   <div id="screen">
-    <img id="background" alt="">
+    <img id="background" alt="Static background image">
     <div id="overlay"></div>
   </div>
-
-</div>
+</section>
 
 <!-- RECEIVER -->
 
-<div id="rx" class="mode">
+<section id="rx" class="mode">
 
   <div class="panel">
     <h2>iPhone Receiver</h2>
 
-    <button onclick="startCamera()">Start Camera</button>
+    <button id="cameraButton" onclick="startCamera()">
+      Start Camera
+    </button>
+
     <p id="rxStatus">Camera not started</p>
 
     <video id="video" autoplay playsinline muted></video>
@@ -248,19 +253,25 @@ pre {
 
     <h3>Live Detected Bit</h3>
     <p id="detectedBit">Waiting...</p>
-    <p id="frequencyInfo">2 Hz: -- | 4 Hz: --</p>
 
-    <h3>Live Brightness Signal</h3>
+    <p id="frequencyInfo">
+      2 Hz: -- | 4 Hz: --
+    </p>
+
+    <h3>Brightness Signal</h3>
     <canvas id="graph" width="400" height="180"></canvas>
   </div>
 
   <div class="panel">
+
     <h2>Message Reception</h2>
 
     <div class="row">
       <label>
         Expected bits:
-        <input id="expectedBits" value="10110010">
+        <input id="expectedBits"
+               value="10110010"
+               inputmode="numeric">
       </label>
 
       <label>
@@ -274,52 +285,52 @@ pre {
     </div>
 
     <p class="info">
-      Select the same message and bit duration as the MacBook.
+      Use the same message and bit duration on both devices.
     </p>
 
-    <div class="row">
-      <button id="captureButton" onclick="startCapture()">
-        Start Capture
-      </button>
-      <button onclick="finishCapture()">
-        Finish & Decode
-      </button>
-    </div>
+    <button id="captureButton" onclick="startCapture()">
+      Start Capture
+    </button>
 
-    <p id="captureStatus">Ready to capture</p>
+    <button onclick="finishCapture()">
+      Finish &amp; Decode
+    </button>
 
     <p class="info">
-      Start Capture on the iPhone, then start transmission
-      on the MacBook within approximately 2-4 seconds.
-      Capture ends automatically after 28 seconds.
+      Start Capture on the iPhone.
+      Start Transmission on your MacBook approximately
+      2–4 seconds later. Keep the camera aimed at the screen.
     </p>
+
+    <p id="captureStatus">Ready to capture</p>
 
     <h3>Received Message</h3>
     <p id="decodedMessage">--</p>
 
-    <div>
-      <div class="metric">
-        Correct Bits
-        <strong id="correctBits">--</strong>
-      </div>
+    <div class="metric">
+      Correct Bits
+      <strong id="correctBits">--</strong>
+    </div>
 
-      <div class="metric">
-        BER
-        <strong id="berResult">--</strong>
-      </div>
+    <div class="metric">
+      BER
+      <strong id="berResult">--</strong>
+    </div>
 
-      <div class="metric">
-        Data Rate
-        <strong id="rateResult">--</strong>
-      </div>
+    <div class="metric">
+      Data Rate
+      <strong id="rateResult">--</strong>
     </div>
 
     <p id="decodeStatus">No message decoded yet</p>
 
-    <pre id="bitDetails"></pre>
+    <h3>Synchronization Diagnostics</h3>
+    <pre id="bitDetails">No capture yet</pre>
+
   </div>
 
   <div class="panel">
+
     <h2>Experiment Results</h2>
 
     <div class="row">
@@ -342,7 +353,8 @@ pre {
       </label>
     </div>
 
-    <button id="saveTrialButton" onclick="saveTrial()" disabled>
+    <button id="saveTrialButton"
+            onclick="saveTrial()" disabled>
       Save Trial
     </button>
 
@@ -350,13 +362,18 @@ pre {
       Download Results CSV
     </button>
 
+    <p class="info">
+      Save only trials whose actual distance and alpha
+      setting match the selections here.
+    </p>
+
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>Distance</th>
-            <th>Delta Alpha</th>
-            <th>Bit Duration</th>
+            <th>Delta alpha</th>
+            <th>Bit duration</th>
             <th>Correct</th>
             <th>BER</th>
             <th>Rate</th>
@@ -366,15 +383,12 @@ pre {
       </table>
     </div>
 
-    <p class="info">
-      Only save trials after checking that the receiver
-      synchronized successfully.
-    </p>
   </div>
 
-</div>
+</section>
 
 <script>
+'use strict';
 
 // ==========================================
 // COMMON SETTINGS
@@ -382,18 +396,19 @@ pre {
 
 const F0 = 2;
 const F1 = 4;
+const PREAMBLE = '01011010';
 
-const PREAMBLE = "01011010";
+const el = id => document.getElementById(id);
 
 function showMode(mode) {
-  document.getElementById("tx").style.display =
-    mode === "tx" ? "block" : "none";
+  el('tx').style.display =
+    mode === 'tx' ? 'block' : 'none';
 
-  document.getElementById("rx").style.display =
-    mode === "rx" ? "block" : "none";
+  el('rx').style.display =
+    mode === 'rx' ? 'block' : 'none';
 }
 
-showMode("tx");
+showMode('tx');
 
 // ==========================================
 // TRANSMITTER
@@ -401,143 +416,116 @@ showMode("tx");
 
 let transmitting = false;
 
-const overlay = document.getElementById("overlay");
-
-document.getElementById("imageFile")
-  .addEventListener("change", e => {
-
+el('imageFile').addEventListener('change', e => {
   const file = e.target.files[0];
 
   if (file) {
-    document.getElementById("background").src =
-      URL.createObjectURL(file);
+    el('background').src = URL.createObjectURL(file);
   }
 });
 
 async function openFullScreen() {
-  const screen = document.getElementById("screen");
-
-  if (screen.requestFullscreen) {
-    try {
-      await screen.requestFullscreen();
-    } catch (e) {
-      console.log(e);
-    }
+  try {
+    await el('screen').requestFullscreen();
+  } catch (err) {
+    alert('Full-screen unavailable: ' + err.message);
   }
 }
 
 function startTransmission() {
   if (transmitting) return;
 
-  const payload =
-    document.getElementById("txMessage").value.trim();
+  const payload = el('txMessage').value.trim();
 
   if (!/^[01]+$/.test(payload)) {
-    alert("Enter a binary message containing only 0 and 1.");
+    alert('Enter only binary digits.');
     return;
   }
 
-  const delta = Number(
-    document.getElementById("txDelta").value
-  );
+  const delta = Number(el('txDelta').value);
+  const bitMs = Number(el('txDuration').value);
 
-  const bitMs = Number(
-    document.getElementById("txDuration").value
-  );
-
-  const sequence = PREAMBLE + payload;
-
-  const status = document.getElementById("txStatus");
-
-  const button = document.getElementById("txButton");
+  const bits = PREAMBLE + payload;
 
   transmitting = true;
-  button.disabled = true;
+  el('txButton').disabled = true;
 
-  const startTime = performance.now();
+  const start = performance.now();
 
-  function animate(now) {
-    const elapsed = now - startTime;
-
+  function draw(now) {
+    const elapsed = now - start;
     const index = Math.floor(elapsed / bitMs);
 
-    if (index >= sequence.length) {
+    if (index >= bits.length) {
       transmitting = false;
-      button.disabled = false;
+      el('txButton').disabled = false;
+      el('overlay').style.opacity = 0.5;
 
-      overlay.style.opacity = 0.5;
-
-      status.textContent =
-        "Transmission complete: " + payload;
+      el('txStatus').textContent =
+        'Transmission complete: ' + payload;
 
       return;
     }
 
-    const bit = sequence[index];
+    const bit = bits[index];
+    const freq = bit === '0' ? F0 : F1;
 
-    const frequency = bit === "0" ? F0 : F1;
+    const localSec = (elapsed % bitMs) / 1000;
 
-    const localTime = (elapsed % bitMs) / 1000;
+    const high =
+      Math.sin(2 * Math.PI * freq * localSec) >= 0;
 
-    const wave = Math.sin(
-      2 * Math.PI * frequency * localTime
-    );
+    const alpha =
+      0.5 + (delta / 2) * (high ? 1 : -1);
 
-    // Square-wave alpha modulation
-    const alpha = 0.5 +
-      (delta / 2) * (wave >= 0 ? 1 : -1);
-
-    overlay.style.opacity = alpha;
+    el('overlay').style.opacity = String(alpha);
 
     if (index < PREAMBLE.length) {
-      status.textContent =
-        "Synchronization preamble: " +
-        (index + 1) + "/" + PREAMBLE.length;
+      el('txStatus').textContent =
+        `Preamble ${index + 1}/${PREAMBLE.length}: ${bit}`;
     } else {
-      status.textContent =
-        "Sending data bit " +
-        (index - PREAMBLE.length + 1) +
-        "/" + payload.length +
-        ": " + bit;
+      el('txStatus').textContent =
+        `Data bit ${index - PREAMBLE.length + 1}` +
+        `/${payload.length}: ${bit}`;
     }
 
-    requestAnimationFrame(animate);
+    requestAnimationFrame(draw);
   }
 
-  requestAnimationFrame(animate);
+  requestAnimationFrame(draw);
 }
 
 // ==========================================
 // CAMERA RECEIVER
 // ==========================================
 
-const video = document.getElementById("video");
+const video = el('video');
 
-const graph = document.getElementById("graph");
-const graphCtx = graph.getContext("2d");
+const canvas = el('graph');
+const ctx = canvas.getContext('2d');
 
-const sampleCanvas = document.createElement("canvas");
+const sampleCanvas = document.createElement('canvas');
+
 sampleCanvas.width = 80;
 sampleCanvas.height = 60;
 
 const sampleCtx = sampleCanvas.getContext(
-  "2d", {willReadFrequently: true}
+  '2d', {willReadFrequently: true}
 );
 
 let cameraRunning = false;
+let liveSamples = [];
 
-let samples = [];
-let lastSampleTime = 0;
-let lastDetectionTime = 0;
+let lastRead = 0;
+let lastDetect = 0;
 
-// Separate recording buffer for message decoding
 let captureActive = false;
-let capturedSamples = [];
-let captureStart = 0;
+let captured = [];
+let captureStarted = 0;
 let captureTimer = null;
 
 let latestResult = null;
-let trials = [];
+const trials = [];
 
 async function startCamera() {
   if (cameraRunning) return;
@@ -547,7 +535,7 @@ async function startCamera() {
       await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
-          facingMode: "environment",
+          facingMode: 'environment',
           width: {ideal: 640},
           height: {ideal: 480},
           frameRate: {ideal: 30}
@@ -559,200 +547,191 @@ async function startCamera() {
     await video.play();
 
     cameraRunning = true;
+    el('cameraButton').disabled = true;
 
-    document.getElementById("rxStatus").textContent =
-      "Camera running";
+    el('rxStatus').textContent = 'Camera running';
 
-    if ("requestVideoFrameCallback" in video) {
-      // Start normal animation loop, using video frames
-      requestAnimationFrame(processFrame);
-    } else {
-      requestAnimationFrame(processFrame);
-    }
+    requestAnimationFrame(processFrame);
 
-  } catch (error) {
-    document.getElementById("rxStatus").textContent =
-      "Camera error: " + error.message;
+  } catch (e) {
+    el('rxStatus').textContent =
+      'Camera error: ' + e.message;
   }
 }
+
+// ==========================================
+// PROCESS CAMERA FRAMES
+// ==========================================
 
 function processFrame(timestamp) {
   if (!cameraRunning) return;
 
   requestAnimationFrame(processFrame);
 
-  // Limit measurement frequency
-  if (timestamp - lastSampleTime < 30) return;
+  if (timestamp - lastRead < 30 ||
+      video.readyState < 2) {
+    return;
+  }
 
-  lastSampleTime = timestamp;
-
-  if (video.readyState < 2) return;
+  lastRead = timestamp;
 
   sampleCtx.drawImage(video, 0, 0, 80, 60);
 
-  const frame = sampleCtx.getImageData(
-    0, 0, 80, 60
-  );
-
-  const data = frame.data;
+  const data =
+    sampleCtx.getImageData(0, 0, 80, 60).data;
 
   let sum = 0;
-  let count = 0;
+  let n = 0;
 
-  // Measure center region
   for (let y = 15; y < 45; y++) {
     for (let x = 20; x < 60; x++) {
+
       const i = (y * 80 + x) * 4;
 
-      const gray =
+      sum +=
         0.299 * data[i] +
         0.587 * data[i + 1] +
         0.114 * data[i + 2];
 
-      sum += gray;
-      count++;
+      n++;
     }
   }
 
-  const mean = sum / count;
-  const t = performance.now() / 1000;
+  const p = {
+    t: performance.now() / 1000,
+    value: sum / n
+  };
 
-  document.getElementById("brightness").textContent =
-    mean.toFixed(2);
+  el('brightness').textContent = p.value.toFixed(2);
 
-  samples.push({t, value: mean});
+  liveSamples.push(p);
 
-  if (samples.length > 150) {
-    samples.shift();
+  if (liveSamples.length > 150) {
+    liveSamples.shift();
   }
 
-  // Record during active capture
   if (captureActive) {
-    capturedSamples.push({t, value: mean});
+    captured.push(p);
   }
 
   drawGraph();
 
-  if (timestamp - lastDetectionTime >= 200) {
-    detectLiveFrequency();
-    lastDetectionTime = timestamp;
+  if (timestamp - lastDetect >= 200) {
+    detectLive();
+    lastDetect = timestamp;
   }
 }
 
 // ==========================================
-// LIVE BRIGHTNESS GRAPH
+// BRIGHTNESS GRAPH
 // ==========================================
 
 function drawGraph() {
-  const w = graph.width;
-  const h = graph.height;
+  const w = canvas.width;
+  const h = canvas.height;
 
-  graphCtx.fillStyle = "#111";
-  graphCtx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, w, h);
 
-  if (samples.length < 2) return;
+  if (liveSamples.length < 2) return;
 
-  const values = samples.map(p => p.value);
+  const vals = liveSamples.map(p => p.value);
 
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = Math.max(1, max - min);
+  const min = Math.min(...vals);
+  const span = Math.max(
+    1, Math.max(...vals) - min
+  );
 
-  graphCtx.strokeStyle = "#4ade80";
-  graphCtx.lineWidth = 2;
-  graphCtx.beginPath();
+  ctx.strokeStyle = '#4ade80';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
 
-  samples.forEach((p, i) => {
-    const x = i / (samples.length - 1) * w;
+  liveSamples.forEach((p, i) => {
+    const x = i / (liveSamples.length - 1) * w;
 
     const y = h - 10 -
       (p.value - min) / span * (h - 20);
 
-    if (i === 0) {
-      graphCtx.moveTo(x, y);
+    if (!i) {
+      ctx.moveTo(x, y);
     } else {
-      graphCtx.lineTo(x, y);
+      ctx.lineTo(x, y);
     }
   });
 
-  graphCtx.stroke();
+  ctx.stroke();
 }
 
 // ==========================================
 // FREQUENCY ESTIMATION
 // ==========================================
 
-// Estimate brightness oscillation at a specific frequency.
-// Uses actual timestamps to handle uneven camera sampling.
-
-function frequencyAmplitude(points, frequency) {
+function amplitude(points, freq) {
   if (points.length < 8) return 0;
 
   const mean = points.reduce(
-    (sum, p) => sum + p.value, 0
+    (s, p) => s + p.value, 0
   ) / points.length;
 
   const t0 = points[0].t;
 
-  let real = 0;
-  let imag = 0;
+  let re = 0;
+  let im = 0;
 
   for (const p of points) {
-    const centered = p.value - mean;
-
     const angle =
-      2 * Math.PI * frequency * (p.t - t0);
+      2 * Math.PI * freq * (p.t - t0);
 
-    real += centered * Math.cos(angle);
-    imag += centered * Math.sin(angle);
+    const v = p.value - mean;
+
+    re += v * Math.cos(angle);
+    im += v * Math.sin(angle);
   }
 
-  return 2 * Math.hypot(real, imag) /
-    points.length;
+  return 2 * Math.hypot(re, im) / points.length;
 }
 
-function getFrequencyResult(points) {
-  const a0 = frequencyAmplitude(points, F0);
-  const a1 = frequencyAmplitude(points, F1);
+function analyzeFrequency(points) {
+  const a0 = amplitude(points, F0);
+  const a1 = amplitude(points, F1);
 
-  const strongest = Math.max(a0, a1);
-  const weakest = Math.min(a0, a1);
+  const hi = Math.max(a0, a1);
+  const lo = Math.min(a0, a1);
 
-  let bit = "?";
-
-  if (strongest >= 0.7 &&
-      strongest >= 1.5 * weakest) {
-    bit = a1 > a0 ? "1" : "0";
-  }
+  const bit =
+    hi >= 0.7 && hi >= 1.5 * lo
+      ? (a1 > a0 ? '1' : '0')
+      : '?';
 
   return {
     bit,
     a0,
     a1,
-    confidence: (strongest - weakest) /
-      (strongest + weakest + 0.5)
+    confidence:
+      (hi - lo) / (hi + lo + 0.5)
   };
 }
 
-function detectLiveFrequency() {
-  if (samples.length < 20) return;
+function detectLive() {
+  if (liveSamples.length < 20) return;
 
-  const latest = samples[samples.length - 1].t;
+  const end =
+    liveSamples[liveSamples.length - 1].t;
 
-  const recent = samples.filter(
-    p => p.t >= latest - 1
+  const points = liveSamples.filter(
+    p => p.t >= end - 1
   );
 
-  if (recent.length < 15) return;
+  if (points.length < 15) return;
 
-  const result = getFrequencyResult(recent);
+  const r = analyzeFrequency(points);
 
-  document.getElementById("detectedBit").textContent =
-    result.bit === "?" ? "Uncertain" : result.bit;
+  el('detectedBit').textContent =
+    r.bit === '?' ? 'Uncertain' : r.bit;
 
-  document.getElementById("frequencyInfo").textContent =
-    "2 Hz: " + result.a0.toFixed(2) +
-    " | 4 Hz: " + result.a1.toFixed(2);
+  el('frequencyInfo').textContent =
+    `2 Hz: ${r.a0.toFixed(2)} | ` +
+    `4 Hz: ${r.a1.toFixed(2)}`;
 }
 
 // ==========================================
@@ -761,58 +740,49 @@ function detectLiveFrequency() {
 
 function startCapture() {
   if (!cameraRunning) {
-    alert("Start the camera first.");
+    alert('Start Camera first.');
     return;
   }
 
   if (captureActive) return;
 
-  const expected =
-    document.getElementById("expectedBits").value.trim();
+  const expected = el('expectedBits').value.trim();
 
   if (!/^[01]+$/.test(expected)) {
-    alert("Enter the expected binary message.");
+    alert('Enter expected bits containing only 0 and 1.');
     return;
   }
 
-  const bitSec =
-    Number(document.getElementById("rxDuration").value)
-      / 1000;
+  const bitSec = Number(el('rxDuration').value) / 1000;
 
-  const requiredTime =
-    (PREAMBLE.length + expected.length) * bitSec + 7;
-
-  if (requiredTime > 28) {
-    alert("Message is too long for this capture. Use fewer bits.");
+  if ((PREAMBLE.length + expected.length) *
+      bitSec + 7 > 28) {
+    alert('Reduce message length to fit the capture.');
     return;
   }
 
-  capturedSamples = [];
+  captured = [];
   latestResult = null;
 
-  document.getElementById("saveTrialButton").disabled =
-    true;
-
-  document.getElementById("decodedMessage").textContent =
-    "--";
-
-  document.getElementById("correctBits").textContent =
-    "--";
-
-  document.getElementById("berResult").textContent =
-    "--";
-
-  document.getElementById("rateResult").textContent =
-    "--";
-
-  document.getElementById("bitDetails").textContent =
-    "";
-
-  captureStart = performance.now() / 1000;
   captureActive = true;
+  captureStarted = performance.now() / 1000;
 
-  document.getElementById("captureStatus").textContent =
-    "Recording. Start the MacBook transmission now!";
+  el('saveTrialButton').disabled = true;
+  el('captureButton').disabled = true;
+
+  [
+    'decodedMessage',
+    'correctBits',
+    'berResult',
+    'rateResult'
+  ].forEach(id => el(id).textContent = '--');
+
+  el('decodeStatus').textContent = 'Waiting for capture';
+  el('bitDetails').textContent = '';
+
+  el('captureStatus').textContent =
+    'Recording. Start transmission on the MacBook ' +
+    'in 2–4 seconds.';
 
   captureTimer = setTimeout(finishCapture, 28000);
 }
@@ -821,15 +791,18 @@ function finishCapture() {
   if (!captureActive) return;
 
   captureActive = false;
+  el('captureButton').disabled = false;
 
-  if (captureTimer) {
-    clearTimeout(captureTimer);
-    captureTimer = null;
-  }
+  clearTimeout(captureTimer);
+  captureTimer = null;
 
-  document.getElementById("captureStatus").textContent =
-    "Capture complete: " + capturedSamples.length +
-    " samples";
+  const recordedSec = captured.length > 1
+    ? captured[captured.length - 1].t - captured[0].t
+    : 0;
+
+  el('captureStatus').textContent =
+    `Capture complete: ${captured.length} samples, ` +
+    `${recordedSec.toFixed(2)} seconds`;
 
   decodeMessage();
 }
@@ -838,110 +811,122 @@ function finishCapture() {
 // BIT WINDOW ANALYSIS
 // ==========================================
 
-// Extract the central portion of a bit to avoid
-// mixing adjacent BFSK frequencies.
-
-function analyzeBit(startTime, bitSec) {
+function analyzeBit(start, bitSec) {
   const margin = bitSec * 0.12;
 
-  const begin = startTime + margin;
-  const end = startTime + bitSec - margin;
-
-  const points = capturedSamples.filter(
-    p => p.t >= begin && p.t < end
+  const points = captured.filter(
+    p =>
+      p.t >= start + margin &&
+      p.t < start + bitSec - margin
   );
 
   if (points.length < 8) {
     return {
-      bit: "?",
+      bit: '?',
       a0: 0,
       a1: 0,
-      confidence: 0
+      confidence: 0,
+      n: points.length
     };
   }
 
-  return getFrequencyResult(points);
+  return {
+    ...analyzeFrequency(points),
+    n: points.length
+  };
 }
 
 // ==========================================
 // PREAMBLE SYNCHRONIZATION
 // ==========================================
 
-// Search through camera timestamps for the known
-// preamble. Synchronization depends on optical data,
-// not on synchronized device clocks.
+function findPreamble(bitSec, payloadLength) {
+  if (captured.length < 20) return null;
 
-function findPreamble(bitSec) {
-  if (capturedSamples.length < 20) return null;
+  const first = captured[0].t;
+  const last = captured[captured.length - 1].t;
 
-  const firstTime = capturedSamples[0].t;
-  const lastTime =
-    capturedSamples[capturedSamples.length - 1].t;
+  const needed =
+    (PREAMBLE.length + payloadLength) * bitSec;
 
-  const requiredBits =
-    PREAMBLE.length +
-    document.getElementById("expectedBits").value.trim().length;
+  const searchStart = first + 0.5;
 
-  const requiredDuration = requiredBits * bitSec;
+  const searchEnd = Math.min(
+    first + 8,
+    last - needed
+  );
+
+  if (searchEnd < searchStart) {
+    return {
+      error:
+        'Not enough timestamp coverage. Need ' +
+        (needed + 0.5).toFixed(1) +
+        ' seconds after initial samples; recording span ' +
+        (last - first).toFixed(2) + ' seconds.'
+    };
+  }
 
   let best = null;
 
-  // Search plausible arrival times. The transmitter should
-  // start 2-4 seconds after receiver capture begins.
-  const searchStart = firstTime + 0.5;
-
-  const searchEnd = Math.min(
-    firstTime + 8,
-    lastTime - requiredDuration
-  );
-
+  // Search possible message starting times
   for (
-    let candidate = searchStart;
-    candidate <= searchEnd;
-    candidate += 0.05
+    let t = searchStart;
+    t <= searchEnd;
+    t += 0.05
   ) {
     let score = 0;
     let matches = 0;
-    let confidenceSum = 0;
+
+    const detected = [];
+    const strengths = [];
 
     for (let i = 0; i < PREAMBLE.length; i++) {
-      const result = analyzeBit(
-        candidate + i * bitSec,
+      const r = analyzeBit(
+        t + i * bitSec,
         bitSec
       );
 
-      const expectedBit = PREAMBLE[i];
+      const want = PREAMBLE[i];
 
-      const target = expectedBit === "0" ?
-        result.a0 : result.a1;
+      const target =
+        want === '0' ? r.a0 : r.a1;
 
-      const other = expectedBit === "0" ?
-        result.a1 : result.a0;
+      const other =
+        want === '0' ? r.a1 : r.a0;
 
-      // Positive score when expected frequency dominates.
-      // Signal strength regularization reduces the
-      // influence of nearly silent windows.
-      const margin = (target - other) /
-        (target + other + 0.5);
+      // Positive score if expected frequency dominates
+      const margin =
+        (target - other) / (target + other + 0.5);
 
       score += margin;
 
-      confidenceSum += Math.abs(margin);
+      const rawBit =
+        r.a1 > r.a0 ? '1' : '0';
+
+      detected.push(
+        Math.max(r.a0, r.a1) < 0.7
+          ? '?'
+          : rawBit
+      );
+
+      strengths.push(
+        `${r.a0.toFixed(2)}/${r.a1.toFixed(2)}`
+      );
 
       if (target > other && target >= 0.7) {
         matches++;
       }
     }
 
-    const averageScore = score / PREAMBLE.length;
+    score /= PREAMBLE.length;
 
-    if (!best || averageScore > best.score) {
+    if (!best || score > best.score) {
       best = {
-        startTime: candidate,
-        score: averageScore,
+        startTime: t,
+        score,
         matches,
-        confidence:
-          confidenceSum / PREAMBLE.length
+        detected: detected.join(''),
+        strengths
       };
     }
   }
@@ -954,227 +939,223 @@ function findPreamble(bitSec) {
 // ==========================================
 
 function decodeMessage() {
-  const expected =
-    document.getElementById("expectedBits").value.trim();
+  const expected = el('expectedBits').value.trim();
 
   const bitSec =
-    Number(document.getElementById("rxDuration").value)
-      / 1000;
+    Number(el('rxDuration').value) / 1000;
 
-  const status = document.getElementById("decodeStatus");
-
-  const sync = findPreamble(bitSec);
+  const sync =
+    findPreamble(bitSec, expected.length);
 
   if (!sync) {
-    status.textContent =
-      "Synchronization failed: insufficient recorded data.";
+    el('decodeStatus').textContent =
+      'Synchronization failed: no usable camera samples.';
     return;
   }
 
-  // Require most of the preamble to match.
-  if (sync.matches < PREAMBLE.length - 1 ||
-      sync.score < 0.15) {
+  if (sync.error) {
+    el('decodeStatus').textContent =
+      'Synchronization failed: insufficient recorded data';
 
-    status.textContent =
-      "Synchronization not reliable. " +
-      "Preamble matches: " +
-      sync.matches + "/" + PREAMBLE.length +
-      ". Try improving camera alignment.";
+    el('bitDetails').textContent = sync.error;
+    return;
+  }
 
-    document.getElementById("bitDetails").textContent =
-      "Best preamble score: " + sync.score.toFixed(3);
+  const offset =
+    (sync.startTime - captured[0].t).toFixed(2);
+
+  // Display preamble diagnostics even if sync fails
+  const diagnostic = [
+    `Expected preamble: ${PREAMBLE}`,
+    `Detected preamble: ${sync.detected}`,
+    `Preamble matches: ${sync.matches}/${PREAMBLE.length}`,
+    `Best preamble score: ${sync.score.toFixed(3)}`,
+    `Candidate start: ${offset} seconds after capture began`,
+    'Per-bit 2 Hz / 4 Hz amplitudes:',
+    ...sync.strengths.map(
+      (s, i) =>
+        `  Preamble bit ${i + 1} (${PREAMBLE[i]}): ${s}`
+    )
+  ];
+
+  el('bitDetails').textContent =
+    diagnostic.join('\n');
+
+  // Do not accept unreliable synchronization
+  if (sync.matches < 7 || sync.score < 0.15) {
+    el('decodeStatus').textContent =
+      `Synchronization not reliable: ` +
+      `${sync.matches}/8 matched, ` +
+      `score ${sync.score.toFixed(3)}. ` +
+      'Do not record BER for this trial.';
 
     return;
   }
 
+  // Decode data following the preamble
   const dataStart =
     sync.startTime + PREAMBLE.length * bitSec;
 
-  let received = "";
+  let received = '';
   let correct = 0;
 
-  let details =
-    "Preamble matches: " +
-    sync.matches + "/" + PREAMBLE.length + "\n" +
-    "Preamble score: " + sync.score.toFixed(3) + "\n\n";
-
   for (let i = 0; i < expected.length; i++) {
-    const result = analyzeBit(
+    const r = analyzeBit(
       dataStart + i * bitSec,
       bitSec
     );
 
-    const bit = result.bit;
-    received += bit;
+    received += r.bit;
 
-    if (bit === expected[i]) {
+    if (r.bit === expected[i]) {
       correct++;
     }
 
-    details +=
-      "Bit " + (i + 1) +
-      ": expected=" + expected[i] +
-      " received=" + bit +
-      " confidence=" + result.confidence.toFixed(3) +
-      "\n";
+    diagnostic.push(
+      `Data bit ${i + 1}: ` +
+      `expected ${expected[i]}, ` +
+      `received ${r.bit}, ` +
+      `2 Hz ${r.a0.toFixed(2)}, ` +
+      `4 Hz ${r.a1.toFixed(2)}`
+    );
   }
 
-  const totalBits = expected.length;
+  // Calculate BER and data rate
+  const ber = 1 - correct / expected.length;
 
-  // Unknown bits count as incorrect.
-  const ber = 1 - correct / totalBits;
+  const rate =
+    correct / (expected.length * bitSec);
 
-  // Assignment definition: correctly received bits
-  // divided by payload transmission time.
-  const payloadTime = totalBits * bitSec;
-  const dataRate = correct / payloadTime;
+  el('decodedMessage').textContent = received;
 
-  document.getElementById("decodedMessage").textContent =
-    received;
+  el('correctBits').textContent =
+    `${correct}/${expected.length}`;
 
-  document.getElementById("correctBits").textContent =
-    correct + "/" + totalBits;
+  el('berResult').textContent =
+    `${(ber * 100).toFixed(2)}%`;
 
-  document.getElementById("berResult").textContent =
-    (ber * 100).toFixed(2) + "%";
+  el('rateResult').textContent =
+    `${rate.toFixed(3)} bps`;
 
-  document.getElementById("rateResult").textContent =
-    dataRate.toFixed(3) + " bps";
+  el('decodeStatus').textContent =
+    'Decoded using camera-detected preamble.';
 
-  document.getElementById("bitDetails").textContent =
-    details;
-
-  status.textContent =
-    "Decoded using camera-detected preamble.";
+  el('bitDetails').textContent =
+    diagnostic.join('\n');
 
   latestResult = {
     expected,
     received,
     correct,
-    totalBits,
+    total: expected.length,
     ber,
-    dataRate,
+    rate,
     bitSec,
     syncScore: sync.score
   };
 
-  document.getElementById("saveTrialButton").disabled =
-    false;
+  el('saveTrialButton').disabled = false;
 }
 
 // ==========================================
-// SAVE EXPERIMENT
+// SAVE EXPERIMENT RESULTS
 // ==========================================
 
 function saveTrial() {
   if (!latestResult) return;
 
-  const distance =
-    Number(document.getElementById("distance").value);
-
-  const delta =
-    Number(document.getElementById("rxDelta").value);
-
-  const result = {
-    distance,
-    delta,
-    bitDuration: latestResult.bitSec,
-    expected: latestResult.expected,
-    received: latestResult.received,
-    correct: latestResult.correct,
-    totalBits: latestResult.totalBits,
-    ber: latestResult.ber,
-    dataRate: latestResult.dataRate,
-    syncScore: latestResult.syncScore
+  const t = {
+    ...latestResult,
+    distance: Number(el('distance').value),
+    delta: Number(el('rxDelta').value)
   };
 
-  trials.push(result);
+  trials.push(t);
+
+  el('saveTrialButton').disabled = true;
 
   renderResults();
-
-  document.getElementById("saveTrialButton").disabled =
-    true;
 }
 
 function renderResults() {
-  const body = document.getElementById("resultsBody");
+  const tbody = el('resultsBody');
 
-  body.innerHTML = "";
+  tbody.innerHTML = '';
 
-  trials.forEach(trial => {
-    const row = document.createElement("tr");
+  for (const t of trials) {
+    const tr = document.createElement('tr');
 
     const values = [
-      trial.distance + " cm",
-      trial.delta,
-      trial.bitDuration + " s",
-      trial.correct + "/" + trial.totalBits,
-      (trial.ber * 100).toFixed(2) + "%",
-      trial.dataRate.toFixed(3) + " bps"
+      `${t.distance} cm`,
+      t.delta,
+      `${t.bitSec} s`,
+      `${t.correct}/${t.total}`,
+      `${(t.ber * 100).toFixed(2)}%`,
+      `${t.rate.toFixed(3)} bps`
     ];
 
-    values.forEach(value => {
-      const cell = document.createElement("td");
-      cell.textContent = value;
-      row.appendChild(cell);
-    });
+    for (const v of values) {
+      const td = document.createElement('td');
+      td.textContent = v;
+      tr.appendChild(td);
+    }
 
-    body.appendChild(row);
-  });
+    tbody.appendChild(tr);
+  }
 }
 
 // ==========================================
-// CSV EXPORT
+// DOWNLOAD RESULTS CSV
 // ==========================================
 
 function downloadCSV() {
-  if (trials.length === 0) {
-    alert("No saved experiment results yet.");
+  if (!trials.length) {
+    alert('No saved trials yet.');
     return;
   }
 
   const header = [
-    "distance_cm",
-    "delta_alpha",
-    "bit_duration_s",
-    "expected_bits",
-    "received_bits",
-    "correct_bits",
-    "total_bits",
-    "BER",
-    "data_rate_bps",
-    "sync_score"
+    'distance_cm',
+    'delta_alpha',
+    'bit_duration_s',
+    'expected_bits',
+    'received_bits',
+    'correct_bits',
+    'total_bits',
+    'BER',
+    'data_rate_bps',
+    'sync_score'
   ];
 
   const rows = trials.map(t => [
     t.distance,
     t.delta,
-    t.bitDuration,
+    t.bitSec,
     t.expected,
     t.received,
     t.correct,
-    t.totalBits,
+    t.total,
     t.ber,
-    t.dataRate,
+    t.rate,
     t.syncScore
   ]);
 
   const csv = [header, ...rows]
-    .map(row => row.join(","))
-    .join("\n");
+    .map(row => row.join(','))
+    .join('\n');
 
-  const blob = new Blob([csv], {
-    type: "text/csv"
-  });
+  const url = URL.createObjectURL(
+    new Blob([csv], {type: 'text/csv'})
+  );
 
-  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
 
-  const link = document.createElement("a");
   link.href = url;
-  link.download = "BFSK_Experiment_Results.csv";
+  link.download = 'BFSK_Experiment_Results.csv';
+
   link.click();
 
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 </script>
